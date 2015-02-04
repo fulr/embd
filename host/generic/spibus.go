@@ -20,8 +20,8 @@ const (
 	spiIOCRdBitsPerWord = 0x80016B03
 	spiIOCRdMaxSpeedHz  = 0x80046B04
 
-	spiIOCMessage0    = 1073769216 //0x40006B00
-	spiIOCIncrementor = 2097152    //0x200000
+	spiIOCMessage0    = 0x40006B00
+	spiIOCIncrementor = 0x00200000
 
 	defaultDelayms  = 0
 	defaultSPIBPW   = 8
@@ -32,10 +32,13 @@ type spiIOCTransfer struct {
 	txBuf uint64
 	rxBuf uint64
 
-	length      uint32
-	speedHz     uint32
+	length  uint32
+	speedHz uint32
+
 	delayus     uint16
 	bitsPerWord uint8
+	csChange    uint8
+	pad         uint16
 }
 
 type spiBus struct {
@@ -61,6 +64,7 @@ func spiIOCMessageN(n uint32) uint32 {
 	return (spiIOCMessage0 + (n * spiIOCIncrementor))
 }
 
+// NewSPIBus creates a new SPI bus
 func NewSPIBus(spiDevMinor, mode, channel byte, speed, bpw, delay int, i func() error) embd.SPIBus {
 	return &spiBus{
 		spiDevMinor: spiDevMinor,
@@ -128,7 +132,7 @@ func (b *spiBus) setMode() error {
 }
 
 func (b *spiBus) setSpeed() error {
-	var speed uint32 = defaultSPISpeed
+	var speed = uint32(defaultSPISpeed)
 	if b.speed > 0 {
 		speed = uint32(b.speed)
 	}
@@ -147,7 +151,7 @@ func (b *spiBus) setSpeed() error {
 }
 
 func (b *spiBus) setBPW() error {
-	var bpw uint8 = defaultSPIBPW
+	var bpw = uint8(defaultSPIBPW)
 	if b.bpw > 0 {
 		bpw = uint8(b.bpw)
 	}
@@ -165,7 +169,7 @@ func (b *spiBus) setBPW() error {
 }
 
 func (b *spiBus) setDelay() {
-	var delay uint16 = defaultDelayms
+	var delay = uint16(defaultDelayms)
 	if b.delayms > 0 {
 		delay = uint16(b.delayms)
 	}
